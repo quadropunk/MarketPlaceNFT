@@ -3,24 +3,24 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 // eslint-disable-next-line node/no-missing-import
-import { ERC721__factory, MyERC721 } from "../typechain";
+import { MyERC721__factory, MyERC721 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 
 describe("ERC721", function () {
   let ERC721: MyERC721;
+  const uri = "https://token-cdn-domain/";
 
   let signers: Array<SignerWithAddress>;
 
   const name = "ERC721";
   const symbol = "ERC721";
-  const NFTs = 99;
 
   beforeEach(async function () {
     signers = await ethers.getSigners();
     const ERC721Factory = (await ethers.getContractFactory(
       "MyERC721",
       signers[0]
-    )) as unknown as ERC721__factory;
+    )) as unknown as MyERC721__factory;
     ERC721 = await ERC721Factory.deploy(name, symbol);
     await ERC721.deployed();
   });
@@ -35,15 +35,22 @@ describe("ERC721", function () {
     });
 
     it("Should set right balances", async function () {
-      expect(await ERC721.balanceOf(signers[0].address)).to.equal(NFTs);
-      console.log(await ERC721.tokenURI(2));
-      for (let i = 1; i < signers.length; i++)
-        expect(await ERC721.balanceOf(signers[i].address)).to.equal(0);
+      signers.forEach(async (signer) =>
+        expect(await ERC721.balanceOf(signer.address)).to.equal(0)
+      );
+    });
+
+    it("Should set right url", async function () {
+      expect(await ERC721.tokenURI(0)).to.equal(uri.concat("0.json"));
     });
   });
 
   describe("Approvals", async function () {
     const id = 1;
+
+    beforeEach(async function () {
+      await ERC721.awardItem(signers[0].address);
+    });
 
     it("Should approve user to send token", async function () {
       expect(await ERC721.approve(signers[1].address, id)).to.emit(
@@ -72,6 +79,10 @@ describe("ERC721", function () {
 
   describe("Transactions", async function () {
     const id = 1;
+
+    beforeEach(async function () {
+      await ERC721.awardItem(signers[0].address);
+    });
 
     describe("transferFrom method", async function () {
       it("Should transfer nft", async function () {
