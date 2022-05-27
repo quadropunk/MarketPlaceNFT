@@ -5,10 +5,11 @@ import { ethers } from "hardhat";
 // eslint-disable-next-line node/no-missing-import
 import { MyERC721__factory, MyERC721 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
+import "dotenv/config";
 
 describe("ERC721", function () {
   let ERC721: MyERC721;
-  const uri = "https://token-cdn-domain/";
+  const uri = `https://${process.env.METADATA_CID}.ipfs.nftstorage.link/metadata/`;
 
   let signers: Array<SignerWithAddress>;
 
@@ -41,7 +42,8 @@ describe("ERC721", function () {
     });
 
     it("Should set right url", async function () {
-      expect(await ERC721.tokenURI(0)).to.equal(uri.concat("0.json"));
+      await ERC721.mintTo(signers[0].address);
+      expect(await ERC721.tokenURI(1)).to.equal(uri.concat("1"));
     });
   });
 
@@ -49,7 +51,7 @@ describe("ERC721", function () {
     const id = 1;
 
     beforeEach(async function () {
-      await ERC721.awardItem(signers[0].address);
+      await ERC721.mintTo(signers[0].address);
     });
 
     it("Should approve user to send token", async function () {
@@ -81,7 +83,7 @@ describe("ERC721", function () {
     const id = 1;
 
     beforeEach(async function () {
-      await ERC721.awardItem(signers[0].address);
+      await ERC721.mintTo(signers[0].address);
     });
 
     describe("transferFrom method", async function () {
