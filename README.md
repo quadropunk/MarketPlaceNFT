@@ -1,46 +1,17 @@
-# Advanced Sample Hardhat Project
+Successfully submitted source code for contract
+contracts/tokens/MyERC721.sol:MyERC721 at `0x7E29a3cDdaf99aE769443c899Bb2E26F92cbeCb5`
+for verification on the block explorer. Waiting for verification result...
 
-This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
+Successfully verified contract MyERC721 on Etherscan.
+https://rinkeby.etherscan.io/address/0x7E29a3cDdaf99aE769443c899Bb2E26F92cbeCb5#code
 
-The project comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts. It also comes with a variety of other tools, preconfigured to work with the project code.
+Opensea collection for ERC721: https://testnets.opensea.io/assets/rinkeby/0x7e29a3cddaf99ae769443c899bb2e26f92cbecb5/1
 
-Try running some of the following tasks:
+Successfully submitted source code for contract
+contracts/tokens/MyERC1155.sol:MyERC1155 at `0x19d7CFB00528E2878794A03E08506d3F906dEc65`
+for verification on the block explorer. Waiting for verification result...
 
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-npx hardhat help
-REPORT_GAS=true npx hardhat test
-npx hardhat coverage
-npx hardhat run scripts/deploy.ts
-TS_NODE_FILES=true npx ts-node scripts/deploy.ts
-npx eslint '**/*.{js,ts}'
-npx eslint '**/*.{js,ts}' --fix
-npx prettier '**/*.{json,sol,md}' --check
-npx prettier '**/*.{json,sol,md}' --write
-npx solhint 'contracts/**/*.sol'
-npx solhint 'contracts/**/*.sol' --fix
-```
+Successfully verified contract MyERC1155 on Etherscan.
+https://rinkeby.etherscan.io/address/0x19d7CFB00528E2878794A03E08506d3F906dEc65#code
 
-# Etherscan verification
-
-To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
-
-In this project, copy the .env.example file to a file named .env, and then edit it to fill in the details. Enter your Etherscan API key, your Ropsten node URL (eg from Alchemy), and the private key of the account which will send the deployment transaction. With a valid .env file in place, first deploy your contract:
-
-```shell
-hardhat run --network ropsten scripts/deploy.ts
-```
-
-Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_ADDRESS` in this command:
-
-```shell
-npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
-```
-
-# Performance optimizations
-
-For faster runs of your tests and scripts, consider skipping ts-node's type checking by setting the environment variable `TS_NODE_TRANSPILE_ONLY` to `1` in hardhat's environment. For more details see [the documentation](https://hardhat.org/guides/typescript.html#performance-optimizations).
+Opensea collection for ERC1155: https://testnets.opensea.io/assets/rinkeby/0x19d7cfb00528e2878794a03e08506d3f906dec65/1
