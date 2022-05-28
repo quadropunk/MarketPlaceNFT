@@ -6,10 +6,11 @@ import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { MyERC1155, MyERC1155__factory } from "../typechain";
 import { BigNumber } from "ethers";
+import "dotenv/config";
 
 describe("ERC1155", function () {
   let ERC1155: MyERC1155;
-  const uri = "https://token-cdn-domain/";
+  const uri = `https://${process.env.METADATA_CID}.ipfs.nftstorage.link/metadata/`;
 
   let signers: Array<SignerWithAddress>;
 
@@ -27,7 +28,7 @@ describe("ERC1155", function () {
     const id = 1;
 
     it("Should set right uri", async function () {
-      expect(await ERC1155.tokenUri(id)).to.equal(uri.concat(`${id}.json`));
+      expect(await ERC1155.uri(id)).to.equal(uri.concat(id.toString()));
     });
 
     it("Should set zero balances", async function () {
@@ -63,16 +64,11 @@ describe("ERC1155", function () {
   });
 
   describe("Transactions", function () {
-    const ids = [1, 2, 3];
+    const ids = [1, 2, 3, 4];
     const amounts = [5, 5, 5];
 
     beforeEach(async function () {
-      await ERC1155.mintBatch(
-        signers[0].address,
-        ids,
-        amounts,
-        ethers.constants.AddressZero
-      );
+      await ERC1155.mintBatch(signers[0].address, amounts);
     });
 
     it("Should transfer tokens", async function () {
@@ -98,7 +94,7 @@ describe("ERC1155", function () {
           signers[0].address,
           signers[1].address,
           ids,
-          amounts,
+          [10].concat(amounts),
           ethers.constants.AddressZero
         )
       ).to.emit("ERC155", "TransferBatch");
