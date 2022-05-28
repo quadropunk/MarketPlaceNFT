@@ -2,24 +2,31 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract MyERC1155 is ERC1155 {
+    using Counters for Counters.Counter;
+    
+    Counters.Counter private currentTokenId;
+
     constructor()
-    ERC1155("https://token-cdn-domain/")
+    ERC1155("https://bafybeiditohxkmdsrpeivbpy64vjftilx63kbavwtqzhhrzbgw7vjygg7y.ipfs.nftstorage.link/metadata/")
     {
-        _mint(msg.sender, 1, 10, "");
+        mintTo(msg.sender, 10);
     }
 
-    function tokenUri(uint256 _id) public view returns (string memory) {
-        return string(abi.encodePacked(uri(0), Strings.toString(_id), ".json"));
+    function mintTo(address account, uint256 amount) public returns(uint) {
+        currentTokenId.increment();
+        uint id = currentTokenId.current();
+        _mint(account, id, amount, "");
+        emit TransferSingle(address(0), address(0), account, id, amount);
+        return id;
     }
 
-    function mint(address account, uint256 id, uint256 amount, bytes memory data) public {
-        _mint(account, id, amount, data);
-    }
-
-    function mintBatch(address account, uint256[] memory ids, uint256[] memory amounts, bytes memory data) public {
-        _mintBatch(account, ids, amounts, data);
+    function mintBatch(address account, uint256[] memory amounts) public {
+        for (uint i = 0; i < amounts.length; i++) {
+            currentTokenId.increment();
+            _balances[currentTokenId.current()][account] = amounts[i];
+        }
     }
 }
