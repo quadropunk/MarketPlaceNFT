@@ -22,7 +22,7 @@ describe("ERC721", function () {
       "MyERC721",
       signers[0]
     )) as unknown as MyERC721__factory;
-    ERC721 = await ERC721Factory.deploy(name, symbol);
+    ERC721 = await ERC721Factory.deploy(name, symbol, uri);
     await ERC721.deployed();
   });
 
@@ -42,7 +42,7 @@ describe("ERC721", function () {
     });
 
     it("Should set right url", async function () {
-      await ERC721.mintTo(signers[0].address);
+      await ERC721.mintTo(signers[0].address, 1);
       expect(await ERC721.tokenURI(1)).to.equal(uri.concat("1"));
     });
   });
@@ -51,7 +51,7 @@ describe("ERC721", function () {
     const id = 1;
 
     beforeEach(async function () {
-      await ERC721.mintTo(signers[0].address);
+      await ERC721.mintTo(signers[0].address, id);
     });
 
     it("Should approve user to send token", async function () {
@@ -83,7 +83,7 @@ describe("ERC721", function () {
     const id = 1;
 
     beforeEach(async function () {
-      await ERC721.mintTo(signers[0].address);
+      await ERC721.mintTo(signers[0].address, id);
     });
 
     describe("transferFrom method", async function () {

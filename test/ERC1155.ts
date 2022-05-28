@@ -11,6 +11,8 @@ import "dotenv/config";
 describe("ERC1155", function () {
   let ERC1155: MyERC1155;
   const uri = `https://${process.env.METADATA_CID}.ipfs.nftstorage.link/metadata/`;
+  const name = "ERC1155";
+  const symbol = "ERC1155";
 
   let signers: Array<SignerWithAddress>;
 
@@ -20,28 +22,31 @@ describe("ERC1155", function () {
       "MyERC1155",
       signers[0]
     )) as unknown as MyERC1155__factory;
-    ERC1155 = await ERC1155Factory.deploy();
+    ERC1155 = await ERC1155Factory.deploy(name, symbol, uri);
     await ERC1155.deployed();
   });
 
   describe("Deployment", async function () {
     const id = 1;
 
+    it("Should set right name", async function () {
+      expect(await ERC1155.name()).to.equal(name);
+    });
+
+    it("Should set right symbol", async function () {
+      expect(await ERC1155.symbol()).to.equal(symbol);
+    });
+
     it("Should set right uri", async function () {
       expect(await ERC1155.uri(id)).to.equal(uri.concat(id.toString()));
     });
 
     it("Should set zero balances", async function () {
-      expect(await ERC1155.balanceOf(signers[0].address, id)).to.equal(
-        BigNumber.from(10)
+      signers.forEach(async (signer) =>
+        expect(await ERC1155.balanceOf(signer.address, id)).to.equal(
+          BigNumber.from(0)
+        )
       );
-      signers
-        .filter((_, index) => index !== 0)
-        .forEach(async (signer) =>
-          expect(await ERC1155.balanceOf(signer.address, id)).to.equal(
-            BigNumber.from(0)
-          )
-        );
     });
   });
 
@@ -64,11 +69,11 @@ describe("ERC1155", function () {
   });
 
   describe("Transactions", function () {
-    const ids = [1, 2, 3, 4];
-    const amounts = [5, 5, 5];
+    const id = 1;
+    const amount = 5;
 
     beforeEach(async function () {
-      await ERC1155.mintBatch(signers[0].address, amounts);
+      await ERC1155.mintTo(signers[0].address, amount, id);
     });
 
     it("Should transfer tokens", async function () {
@@ -77,32 +82,12 @@ describe("ERC1155", function () {
         await ERC1155.safeTransferFrom(
           signers[0].address,
           signers[1].address,
-          ids[0],
-          amounts[0],
+          id,
+          amount,
           ethers.constants.AddressZero
         )
       ).to.emit("ERC1155", "TransferSingle");
-      expect(await ERC1155.balanceOf(signers[1].address, ids[0])).to.equal(
-        amounts[0]
-      );
-    });
-
-    it("Should transfer multiple tokens", async function () {
-      await ERC1155.setApprovalForAll(signers[1].address, true);
-      expect(
-        await ERC1155.safeBatchTransferFrom(
-          signers[0].address,
-          signers[1].address,
-          ids,
-          [10].concat(amounts),
-          ethers.constants.AddressZero
-        )
-      ).to.emit("ERC155", "TransferBatch");
-      ids.forEach(async (id, i) =>
-        expect(await ERC1155.balanceOf(signers[1].address, id)).to.equal(
-          amounts[i]
-        )
-      );
+      expect(await ERC1155.balanceOf(signers[1].address, id)).to.equal(amount);
     });
   });
 });
