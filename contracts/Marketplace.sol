@@ -1,37 +1,84 @@
 // SPDX-License-Identifier: No License
 pragma solidity ^0.8.0;
 
+import "./tokens/MyERC20.sol";
+import "./tokens/MyERC721.sol";
+import "./tokens/MyERC1155.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+
 contract Marketplace {
-    uint256 private ids;
-    address public owner;
+    using Counters for Counters.Counter;
 
-    constructor() {
-        ids = 0;
-        owner = msg.sender;
+    Counters.Counter private currentTokenId;
+
+    struct NFT {
+        address owner;
+        uint256 amount;
+        bool forSale;
+        uint256 price;
+        bool sold;
     }
 
-    /// @notice creates NFT
-    function createItem(string memory tokenUri_, address owner_) external {
+    MyERC20 private erc20;
+    MyERC721 private erc721;
+    MyERC1155 private erc1155;
 
+    mapping(uint256 => NFT) public nfts;
+
+    constructor(address erc20_, address erc721_, address erc1155_) {
+        erc20 = MyERC20(erc20_);
+        erc721 = MyERC721(erc721_);
+        erc1155 = MyERC1155(erc1155_);
     }
 
-    /// @notice mints NFT (ERC721, ERC1155)
-    function mint() internal {
-
+    function createItem(uint256 tokenId) external {
+        require(nfts[tokenId].owner == address(0), "Token with such id exists");
+        erc721.mintTo(msg.sender, tokenId);
+        nfts[tokenId] = NFT({
+            owner: msg.sender,
+            amount: 1,
+            forSale: false,
+            price: 0,
+            sold: false
+        });
     }
 
-    /// @notice puts up for sale
-    function listItem(uint256 tokenId_, uint256 price_) external {
-
+    function createItem(uint256 amount, uint256 tokenId) external {
+        require(amount != 0, "Amount cannot be zero");
+        require(nfts[tokenId].owner == address(0), "Token with such id exists");
+        erc1155.mintTo(msg.sender, amount, tokenId);
+        nfts[tokenId] = NFT({
+            owner: msg.sender,
+            amount: amount,
+            forSale: false,
+            price: 0,
+            sold: false
+        });
     }
 
-    /// @notice cancels sale
-    function cancel(uint256 tokenId_) external {
-
+    function listItem(uint256 tokenId, uint256 price) external {
+        require(
+            nfts[tokenId].sold == false && nfts[tokenId].forSale == false,
+            "Already sold or listed"
+        );
+        nfts[tokenId].forSale = true;
+        nfts[tokenId].price = price;
     }
 
-    /// @notice buys token
-    function buyItem(uint256 tokenId_) external {
+    function cancel(uint256 tokenId) external {
+        require(
+            nfts[tokenId].sold == false && nfts[tokenId].forSale == true,
+            "Sold or not listed"
+        );
+        nfts[tokenId].forSale = false;
+    }
 
+    function buyItem(uint256 tokenId) external {
+        require(
+            nfts[tokenId].sold == false && nfts[tokenId].forSale == true,
+            "Sold or not listed"
+        );
+        require(erc20.transferFrom(msg.sender, nfts[tokenId].owner, nfts[tokenId].price), "Transaction cancelled");
+        nfts[tokenId].sold = true;
     }
 }
