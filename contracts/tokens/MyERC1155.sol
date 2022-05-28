@@ -9,6 +9,9 @@ contract MyERC1155 is ERC1155 {
     
     Counters.Counter private currentTokenId;
 
+    string private _name = "MyERC1155";
+    string private _symbol = "MERC1155";
+
     constructor()
     ERC1155("https://bafybeiditohxkmdsrpeivbpy64vjftilx63kbavwtqzhhrzbgw7vjygg7y.ipfs.nftstorage.link/metadata/")
     {
@@ -28,5 +31,13 @@ contract MyERC1155 is ERC1155 {
             currentTokenId.increment();
             _balances[currentTokenId.current()][account] = amounts[i];
         }
+    }
+
+    function name() public view returns (string memory) {
+        return _name;
+    }
+
+    function symbol() public view returns (string memory) {
+        return _symbol;
     }
 }
