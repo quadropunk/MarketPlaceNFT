@@ -20,8 +20,8 @@ contract MyERC1155 is ERC1155 {
     }
 
     function mintTo(address account, uint256 amount) public returns(uint) {
-        uint id = currentTokenId.current();
         currentTokenId.increment();
+        uint id = currentTokenId.current();
         _mint(account, id, amount, "");
         emit TransferSingle(address(0), address(0), account, id, amount);
         return id;
