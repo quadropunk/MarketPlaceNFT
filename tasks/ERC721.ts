@@ -1,7 +1,7 @@
 import { task } from "hardhat/config";
 import fetch from "node-fetch";
 
-task("mintTo", "Mints new nft to some address")
+task("mintErc721To", "Mints new nft to some address")
   .addParam("receiver")
   .setAction(async function (taskArguments, hre) {
     const ERC721 = await hre.ethers.getContractAt(
@@ -12,7 +12,7 @@ task("mintTo", "Mints new nft to some address")
     console.log(`Minted new token with id: ${id}`);
   });
 
-task("printNft", "Prints metadata of the given token id")
+task("printErc721", "Prints metadata of the given token id")
   .addParam("tokenId")
   .setAction(async function (taskArguments, hre) {
     const ERC721 = await hre.ethers.getContractAt(
