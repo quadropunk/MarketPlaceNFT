@@ -9,18 +9,19 @@ contract MyERC1155 is ERC1155 {
     
     Counters.Counter private currentTokenId;
 
-    string private _name = "MyERC1155";
-    string private _symbol = "MERC1155";
+    string private _name;
+    string private _symbol;
 
-    constructor()
-    ERC1155("https://bafybeiditohxkmdsrpeivbpy64vjftilx63kbavwtqzhhrzbgw7vjygg7y.ipfs.nftstorage.link/metadata/")
+    constructor(string memory name_, string memory symbol_, string memory uri_)
+    ERC1155(uri_)
     {
-        mintTo(msg.sender, 10);
+        _name = name_;
+        _symbol = symbol_;
     }
 
     function mintTo(address account, uint256 amount) public returns(uint) {
-        currentTokenId.increment();
         uint id = currentTokenId.current();
+        currentTokenId.increment();
         _mint(account, id, amount, "");
         emit TransferSingle(address(0), address(0), account, id, amount);
         return id;
