@@ -4,38 +4,24 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 // eslint-disable-next-line node/no-missing-import
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
-import { MyERC1155, MyERC1155__factory } from "../typechain";
-import { BigNumber } from "ethers";
+import { BigNumber, Contract } from "ethers";
 import "dotenv/config";
 
 describe("ERC1155", function () {
-  let ERC1155: MyERC1155;
+  let ERC1155: Contract;
   const uri = `https://${process.env.METADATA_CID}.ipfs.nftstorage.link/metadata/`;
-  const name = "ERC1155";
-  const symbol = "ERC1155";
 
   let signers: Array<SignerWithAddress>;
 
   beforeEach(async function () {
     signers = await ethers.getSigners();
-    const ERC1155Factory = (await ethers.getContractFactory(
-      "MyERC1155",
-      signers[0]
-    )) as unknown as MyERC1155__factory;
-    ERC1155 = await ERC1155Factory.deploy(name, symbol, uri);
+    const ERC1155Factory = await ethers.getContractFactory("MyERC1155");
+    ERC1155 = await ERC1155Factory.deploy(uri);
     await ERC1155.deployed();
   });
 
   describe("Deployment", async function () {
     const id = 1;
-
-    it("Should set right name", async function () {
-      expect(await ERC1155.name()).to.equal(name);
-    });
-
-    it("Should set right symbol", async function () {
-      expect(await ERC1155.symbol()).to.equal(symbol);
-    });
 
     it("Should set right uri", async function () {
       expect(await ERC1155.uri(id)).to.equal(uri.concat(id.toString()));

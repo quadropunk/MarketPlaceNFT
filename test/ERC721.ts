@@ -2,13 +2,12 @@
 /* eslint-disable camelcase */
 import { expect } from "chai";
 import { ethers } from "hardhat";
-// eslint-disable-next-line node/no-missing-import
-import { MyERC721__factory, MyERC721 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import "dotenv/config";
+import { Contract } from "ethers";
 
 describe("ERC721", function () {
-  let ERC721: MyERC721;
+  let ERC721: Contract;
   const uri = `https://${process.env.METADATA_CID}.ipfs.nftstorage.link/metadata/`;
 
   let signers: Array<SignerWithAddress>;
@@ -18,10 +17,7 @@ describe("ERC721", function () {
 
   beforeEach(async function () {
     signers = await ethers.getSigners();
-    const ERC721Factory = (await ethers.getContractFactory(
-      "MyERC721",
-      signers[0]
-    )) as unknown as MyERC721__factory;
+    const ERC721Factory = await ethers.getContractFactory("MyERC721");
     ERC721 = await ERC721Factory.deploy(name, symbol, uri);
     await ERC721.deployed();
   });
