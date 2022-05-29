@@ -17,7 +17,7 @@ contract MyERC721 is ERC721URIStorage {
     }
 
     function mintTo(address to, uint256 tokenId) public {
-        _mint(to, tokenId);
+        _safeMint(to, tokenId);
         _setTokenURI(tokenId, tokenId.toString());
     }
 

@@ -56,52 +56,63 @@ describe("Marketplace", function () {
     const id = 1;
     const price = 10;
 
-    it("Should create item", async function () {
+    beforeEach(async function () {
       await marketplace["createItem(uint256)"](id);
+    });
+
+    it("Should create item", async function () {
       expect(await erc721.ownerOf(id)).to.equal(signers[0].address);
       const tokenInfo = await marketplace.tokensInfo(id);
+
       expect(tokenInfo.owner).to.equal(signers[0].address);
       expect(tokenInfo.price).to.equal(0);
     });
 
     it("Should revert if token id already created", async function () {
-      await marketplace["createItem(uint256)"](id);
       await expect(marketplace["createItem(uint256)"](id)).to.be.revertedWith(
         "Token with such id exists"
       );
     });
 
     it("Should list item", async function () {
-      await marketplace["createItem(uint256)"](id);
+      await erc721.approve(marketplace.address, id);
       await marketplace["listItem(uint256,uint256)"](id, price);
+
       const tokenInfo = await marketplace.tokensInfo(id);
       expect(tokenInfo.price).to.equal(price);
     });
 
     it("Should revert if item is already listed", async function () {
-      await marketplace["createItem(uint256)"](id);
+      await erc721.approve(marketplace.address, id);
       await marketplace["listItem(uint256,uint256)"](id, price);
+
       await expect(
         marketplace["listItem(uint256,uint256)"](id, price)
       ).to.be.revertedWith("This item is already listed");
     });
 
     it("Should buy item", async function () {
-      await erc20.mint(signers[1].address, ethers.constants.MaxUint256);
-      await erc20
-        .connect(signers[1])
-        .approve(signers[0].address, ethers.constants.MaxUint256);
-      await marketplace["createItem(uint256)"](id);
+      await erc721.approve(marketplace.address, id);
       await marketplace["listItem(uint256,uint256)"](id, price);
+
+      let tokenInfo = await marketplace.tokensInfo(id);
+      const tokenOwner = tokenInfo.owner;
+      const prevBalance = await erc20.balanceOf(tokenOwner);
+
+      await erc20.mint(signers[1].address, price);
+      await erc20.connect(signers[1]).approveTokens(tokenOwner, price);
       await marketplace.connect(signers[1])["buyItem(uint256)"](id);
-      const tokenInfo = await marketplace.tokensInfo(id);
+
+      tokenInfo = await marketplace.tokensInfo(id);
       expect(tokenInfo.owner).to.equal(signers[1].address);
       expect(tokenInfo.price).to.equal(0);
+      expect(await erc20.balanceOf(tokenOwner)).to.equal(prevBalance + price);
     });
 
     it("Should cancel sale", async function () {
-      await marketplace["createItem(uint256)"](id);
+      await erc721.approve(marketplace.address, id);
       await marketplace["listItem(uint256,uint256)"](id, price);
+
       await marketplace.cancel(id);
       const tokenInfo = await marketplace.tokensInfo(id);
       expect(tokenInfo.price).to.equal(0);
@@ -113,30 +124,33 @@ describe("Marketplace", function () {
     const amount = 5;
     const price = 10;
 
-    it("Should create item", async function () {
+    beforeEach(async function () {
       await marketplace["createItem(uint256,uint256)"](amount, id);
+      await erc1155.approve(marketplace.address, id, amount);
+    });
+
+    it("Should create item", async function () {
       expect(await erc1155.balanceOf(signers[0].address, id)).to.equal(amount);
+
       const tokenInfo = await marketplace.tokensInfo(id);
       expect(tokenInfo.owner).to.equal(signers[0].address);
       expect(tokenInfo.price).to.equal(0);
     });
 
     it("Should revert if token is already created", async function () {
-      await marketplace["createItem(uint256,uint256)"](amount, id);
       await expect(
         marketplace["createItem(uint256,uint256)"](amount, id)
       ).to.be.revertedWith("Token with such id exists");
     });
 
     it("Should list item", async function () {
-      await marketplace["createItem(uint256,uint256)"](amount, id);
       await marketplace["listItem(uint256,uint256,uint256)"](id, price, amount);
+
       const tokenInfo = await marketplace.tokensInfo(id);
       expect(tokenInfo.price).to.equal(price);
     });
 
     it("Should revert if item is already listed", async function () {
-      await marketplace["createItem(uint256,uint256)"](amount, id);
       await marketplace["listItem(uint256,uint256,uint256)"](id, price, amount);
       await expect(
         marketplace["listItem(uint256,uint256,uint256)"](id, price, amount)
@@ -144,22 +158,34 @@ describe("Marketplace", function () {
     });
 
     it("Should buy item", async function () {
-      await erc20.mint(signers[1].address, ethers.constants.MaxUint256);
+      await erc1155.approve(marketplace.address, id, amount);
+      await marketplace["listItem(uint256,uint256,uint256)"](id, price, amount);
+
+      let tokenInfo = await marketplace.tokensInfo(id);
+      const tokenOwner = tokenInfo.owner;
+      const prevBalance = await erc20.balanceOf(tokenOwner);
+
+      const totalPrice = BigNumber.from(price).mul(amount);
+
+      await erc20.mint(signers[1].address, totalPrice);
       await erc20
         .connect(signers[1])
-        .approve(signers[0].address, ethers.constants.MaxUint256);
-      await marketplace["createItem(uint256,uint256)"](amount, id);
-      await marketplace["listItem(uint256,uint256,uint256)"](id, price, amount);
+        .approveTokens(tokenOwner, BigNumber.from(price).mul(amount));
+
+      await erc1155.approve(signers[1].address, id, amount);
       await marketplace
         .connect(signers[1])
         ["buyItem(uint256,uint256)"](id, amount);
-      const tokenInfo = await marketplace.tokensInfo(id);
+
+      tokenInfo = await marketplace.tokensInfo(id);
       expect(tokenInfo.owner).to.equal(signers[1].address);
       expect(tokenInfo.price).to.equal(0);
+      expect(await erc20.balanceOf(tokenOwner)).to.equal(
+        BigNumber.from(prevBalance).add(totalPrice)
+      );
     });
 
     it("Should cancel sale", async function () {
-      await marketplace["createItem(uint256,uint256)"](amount, id);
       await marketplace["listItem(uint256,uint256,uint256)"](id, price, amount);
       await marketplace.cancel(id);
       const tokenInfo = await marketplace.tokensInfo(id);
