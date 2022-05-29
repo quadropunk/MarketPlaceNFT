@@ -1,5 +1,6 @@
 import "./ERC721.ts";
 import "./ERC1155.ts";
+import "./Marketplace.ts";
 
 import { task } from "hardhat/config";
 import "dotenv/config";
