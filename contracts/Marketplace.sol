@@ -8,13 +8,23 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "hardhat/console.sol";
 
 contract Marketplace {
+
+    /*-----------------------------------
+    |                                   |
+    |               STATES              |
+    |                                   |
+    |-----------------------------------*/
     using SafeMath for uint256;
 
     struct SellingOrder {
         address owner;
         uint256 amount;
         uint256 price;
+        uint256 startedTime;
+        address lastBidder;
     }
+
+    uint256 public constant AUCTION_PERIOD = 3 days;
 
     MyERC20 public erc20;
     MyERC721 public erc721;
@@ -42,9 +52,17 @@ contract Marketplace {
         tokensInfo[tokenId] = SellingOrder({
             owner: msg.sender,
             amount: 1,
-            price: 0
+            price: 0,
+            startedTime: 0,
+            lastBidder: address(0)
         });
     }
+
+    /*-----------------------------------
+    |                                   |
+    |        MARKETPLACE FUNCTIONS      |
+    |                                   |
+    |-----------------------------------*/
 
     function createItem(uint256 amount, uint256 tokenId) external {
         require(amount != 0, "Amount cannot be zero");
@@ -53,7 +71,9 @@ contract Marketplace {
         tokensInfo[tokenId] = SellingOrder({
             owner: msg.sender,
             amount: amount,
-            price: 0
+            price: 0,
+            startedTime: 0,
+            lastBidder: address(0)
         });
     }
 
@@ -91,5 +111,48 @@ contract Marketplace {
         erc1155.transferFrom(platform, msg.sender, tokenId, amount);
         tokensInfo[tokenId].owner = msg.sender;
         tokensInfo[tokenId].price = 0;
+    }
+
+    /*-----------------------------------
+    |                                   |
+    |        AUCTION FUNCTIONS          |
+    |                                   |
+    |-----------------------------------*/
+
+    function listItemOnAuction(uint256 tokenId, uint256 minPrice) external onlyTokenOwner(tokenId) {
+        require(tokensInfo[tokenId].startedTime == 0, "Token is already on auction");
+        erc721.transferFrom(msg.sender, platform, tokenId);
+        tokensInfo[tokenId].price = minPrice;
+        tokensInfo[tokenId].startedTime = block.timestamp;
+    }
+
+    function listItemOnAuction(uint256 tokenId, uint256 minPrice, uint256 amount) external onlyTokenOwner(tokenId) {
+        require(tokensInfo[tokenId].startedTime == 0, "Token is already on auction");
+        require(tokensInfo[tokenId].amount >= amount, "Not enough tokens");
+        erc1155.transferFrom(msg.sender, platform, tokenId, amount);
+        tokensInfo[tokenId].price = minPrice;
+        tokensInfo[tokenId].startedTime = block.timestamp;
+    }
+
+    function finishAuction(uint256 tokenId) external {
+        require(tokensInfo[tokenId].startedTime + AUCTION_PERIOD > block.timestamp, "Auction is not over yet");
+        if (tokensInfo[tokenId].amount == 1)
+            erc721.transferFrom(platform, tokensInfo[tokenId].lastBidder, tokenId);
+        else erc1155.transferFrom(platform, tokensInfo[tokenId].lastBidder, tokenId, tokensInfo[tokenId].amount);
+        tokensInfo[tokenId].startedTime = 0;
+        tokensInfo[tokenId].price = 0;
+        tokensInfo[tokenId].owner = tokensInfo[tokenId].lastBidder;
+        tokensInfo[tokenId].lastBidder = address(0);
+    }
+
+    function makeBid(uint256 tokenId, uint256 price) external {
+        require(tokensInfo[tokenId].startedTime != 0, "Token is not on auction");        
+        require(tokensInfo[tokenId].startedTime + AUCTION_PERIOD <= block.timestamp, "Token is not on auction");
+        require(tokensInfo[tokenId].price < price, "Cannot pay <= current price");
+        if (tokensInfo[tokenId].lastBidder != address(0))
+            erc20.transfer(tokensInfo[tokenId].lastBidder, tokensInfo[tokenId].price);
+        erc20.transferFrom(msg.sender, platform, price);
+        tokensInfo[tokenId].price = price;
+        tokensInfo[tokenId].lastBidder = msg.sender;
     }
 }
