@@ -3,8 +3,11 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract MyERC721 is ERC721URIStorage {
+    using Strings for uint256;
+
     constructor(
         string memory name_,
         string memory symbol_,
@@ -14,8 +17,8 @@ contract MyERC721 is ERC721URIStorage {
     }
 
     function mintTo(address to, uint256 tokenId) public {
-        _setTokenURI(tokenId, tokenURI(tokenId));
         _mint(to, tokenId);
+        _setTokenURI(tokenId, tokenId.toString());
     }
 
     function supportsInterface(bytes4 interfaceId)

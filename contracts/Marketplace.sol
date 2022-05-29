@@ -18,9 +18,9 @@ contract Marketplace {
         uint256 price;
     }
 
-    MyERC20 private erc20;
-    MyERC721 private erc721;
-    MyERC1155 private erc1155;
+    MyERC20 public erc20;
+    MyERC721 public erc721;
+    MyERC1155 public erc1155;
 
     mapping(uint256 => SellingOrder) public tokensInfo;
 
