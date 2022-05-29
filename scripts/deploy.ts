@@ -11,7 +11,7 @@ async function main() {
   const erc721 = await ERC721.deploy("MyToken721", "MTN721", METADATA_LINK);
 
   const ERC1155 = await ethers.getContractFactory("MyERC1155");
-  const erc1155 = await ERC1155.deploy("MyToken1155", "MTN1155", METADATA_LINK);
+  const erc1155 = await ERC1155.deploy(METADATA_LINK);
 
   const MARKET_PLACE = await ethers.getContractFactory("Marketplace");
   const marketPlace = await MARKET_PLACE.deploy(
