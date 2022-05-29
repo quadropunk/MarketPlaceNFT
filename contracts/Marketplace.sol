@@ -24,7 +24,7 @@ contract Marketplace {
         address lastBidder;
     }
 
-    uint256 public constant AUCTION_PERIOD = 3 days;
+    uint256 public constant AUCTION_PERIOD = 3 seconds;
 
     MyERC20 public erc20;
     MyERC721 public erc721;
@@ -46,6 +46,12 @@ contract Marketplace {
         _;
     }
 
+    /*-----------------------------------
+    |                                   |
+    |        MARKETPLACE FUNCTIONS      |
+    |                                   |
+    |-----------------------------------*/
+
     function createItem(uint256 tokenId) external {
         require(tokensInfo[tokenId].owner == address(0), "Token with such id exists");
         erc721.mintTo(msg.sender, tokenId);
@@ -57,12 +63,6 @@ contract Marketplace {
             lastBidder: address(0)
         });
     }
-
-    /*-----------------------------------
-    |                                   |
-    |        MARKETPLACE FUNCTIONS      |
-    |                                   |
-    |-----------------------------------*/
 
     function createItem(uint256 amount, uint256 tokenId) external {
         require(amount != 0, "Amount cannot be zero");
@@ -147,7 +147,7 @@ contract Marketplace {
 
     function makeBid(uint256 tokenId, uint256 price) external {
         require(tokensInfo[tokenId].startedTime != 0, "Token is not on auction");        
-        require(tokensInfo[tokenId].startedTime + AUCTION_PERIOD <= block.timestamp, "Token is not on auction");
+        require(tokensInfo[tokenId].startedTime + AUCTION_PERIOD > block.timestamp, "Token is not on auction");
         require(tokensInfo[tokenId].price < price, "Cannot pay <= current price");
         if (tokensInfo[tokenId].lastBidder != address(0))
             erc20.transfer(tokensInfo[tokenId].lastBidder, tokensInfo[tokenId].price);

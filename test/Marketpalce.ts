@@ -5,7 +5,6 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 
 import { BigNumber, Contract } from "ethers";
 import "dotenv/config";
-import { EPERM } from "constants";
 
 describe("Marketplace", function () {
   let marketplace: Contract;
@@ -190,6 +189,122 @@ describe("Marketplace", function () {
       await marketplace.cancel(id);
       const tokenInfo = await marketplace.tokensInfo(id);
       expect(tokenInfo.price).to.equal(0);
+    });
+  });
+
+  describe("Auction", function () {
+    const erc721Id = 1;
+    const erc1155Id = 2;
+    const amount = 10;
+
+    const minPrice = 1;
+    const newPrice = 2;
+
+    beforeEach(async function () {
+      await marketplace["createItem(uint256)"](erc721Id);
+      await erc721.approve(marketplace.address, erc721Id);
+
+      await marketplace["createItem(uint256,uint256)"](amount, erc1155Id);
+      await erc1155.approve(marketplace.address, erc1155Id, amount);
+
+      await erc20.mint(signers[0].address, 100);
+      await erc20.mint(signers[1].address, 100);
+    });
+
+    it("Should list erc721 on auction", async function () {
+      await marketplace["listItemOnAuction(uint256,uint256)"](
+        erc721Id,
+        minPrice
+      );
+      const tokenInfo = await marketplace.tokensInfo(erc721Id);
+      expect(tokenInfo.price).to.equal(minPrice);
+      expect(await erc721.ownerOf(erc721Id)).to.equal(marketplace.address);
+    });
+
+    it("Should list erc1155 on auction", async function () {
+      await marketplace["listItemOnAuction(uint256,uint256,uint256)"](
+        erc1155Id,
+        minPrice,
+        amount
+      );
+      const tokenInfo = await marketplace.tokensInfo(erc1155Id);
+      expect(tokenInfo.price).to.equal(minPrice);
+      expect(await erc1155.balanceOf(marketplace.address, erc1155Id)).to.equal(
+        amount
+      );
+    });
+
+    it("Should make a bid on erc721", async function () {
+      await marketplace["listItemOnAuction(uint256,uint256)"](
+        erc721Id,
+        minPrice
+      );
+      let tokenInfo = await marketplace.tokensInfo(erc721Id);
+      await erc20
+        .connect(signers[1])
+        .approveTokens(marketplace.address, newPrice);
+      await marketplace.connect(signers[1]).makeBid(erc721Id, newPrice);
+      tokenInfo = await marketplace.tokensInfo(erc721Id);
+      expect(tokenInfo.price).to.equal(newPrice);
+      expect(await erc20.balanceOf(marketplace.address)).to.equal(newPrice);
+    });
+
+    it("Should make a bid on erc721", async function () {
+      await marketplace["listItemOnAuction(uint256,uint256,uint256)"](
+        erc1155Id,
+        minPrice,
+        amount
+      );
+      let tokenInfo = await marketplace.tokensInfo(erc1155Id);
+      await erc20
+        .connect(signers[1])
+        .approveTokens(
+          marketplace.address,
+          BigNumber.from(newPrice).mul(amount)
+        );
+      await marketplace.connect(signers[1]).makeBid(erc1155Id, newPrice);
+      tokenInfo = await marketplace.tokensInfo(erc1155Id);
+      expect(tokenInfo.price).to.equal(newPrice);
+      expect(await erc20.balanceOf(marketplace.address)).to.equal(newPrice);
+    });
+
+    it("Should finish erc721 auction", async function () {
+      await marketplace["listItemOnAuction(uint256,uint256)"](
+        erc721Id,
+        minPrice
+      );
+      await erc20
+        .connect(signers[1])
+        .approveTokens(marketplace.address, newPrice);
+      await marketplace.connect(signers[1]).makeBid(erc721Id, newPrice);
+      await marketplace.finishAuction(erc721Id);
+      const tokenInfo = await marketplace.tokensInfo(erc721Id);
+      expect(tokenInfo.owner).to.equal(signers[1].address);
+      expect(tokenInfo.price).to.equal(0);
+      expect(tokenInfo.startedTime).to.equal(0);
+      expect(tokenInfo.lastBidder).to.equal(ethers.constants.AddressZero);
+      expect(await erc721.ownerOf(erc721)).to.equal(signers[1].address);
+    });
+
+    it("Should finish erc1155 auction", async function () {
+      await marketplace["listItemOnAuction(uint256,uint256,uint256)"](
+        erc721Id,
+        minPrice,
+        amount
+      );
+      await erc20
+        .connect(signers[1])
+        .approveTokens(
+          marketplace.address,
+          BigNumber.from(newPrice).mul(amount)
+        );
+      await marketplace.connect(signers[1]).makeBid(erc1155Id, newPrice);
+      await marketplace.finishAuction(erc1155Id);
+      const tokenInfo = await marketplace.tokensInfo(erc1155Id);
+      expect(tokenInfo.owner).to.equal(signers[1].address);
+      expect(tokenInfo.price).to.equal(0);
+      expect(tokenInfo.startedTime).to.equal(0);
+      expect(tokenInfo.lastBidder).to.equal(ethers.constants.AddressZero);
     });
   });
 });
